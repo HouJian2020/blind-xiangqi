@@ -116,3 +116,7 @@ Thumbs.db
 
 # Claude Code local settings
 .claude/settings.local.json
+
+# Claude Code project instructions
+CLAUDE.md
+design.md
