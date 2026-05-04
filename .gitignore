@@ -113,3 +113,6 @@ Thumbs.db
 # Project specific
 *.log
 *.xqi
+
+# Claude Code local settings
+.claude/settings.local.json

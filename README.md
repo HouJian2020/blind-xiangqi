@@ -263,6 +263,60 @@ ruff check xiangqi_engine/
 ruff check xiangqi_engine/ --fix
 ```
 
+## Claude Code Skill
+
+本项目包含一个 Claude Code skill，用于在 Claude Code CLI 中进行盲棋对弈。
+
+### Skill 位置
+
+```
+.claude/skills/xiangqi-partner/
+├── SKILL.md           # Skill 定义和使用说明
+└── scripts/
+    ├── xiangqi.sh     # Linux/macOS 启动脚本
+    ├── xiangqi.bat    # Windows 启动脚本
+    ├── xiangqi.env    # 配置文件
+    ├── config.py      # 配置管理
+    ├── executor.py    # 命令执行器
+    └── xiangqi_api.py # API 封装
+```
+
+### 功能特性
+
+- **自然语言交互**：直接与 Claude 对话下棋
+- **招法纠错**：自动识别并纠错常见输入错字（如 `马吴进琪` → `马五进七`）
+- **简洁输出**：直接返回程序输出，无冗余提示
+- **多对局管理**：支持创建、切换、查看多个对局
+- **棋盘可视化**：生成 SVG 棋盘图片
+
+### 触发方式
+
+在 Claude Code 中输入以下关键词即可触发：
+
+- `下棋`、`象棋`、`盲棋`、`对弈`、`走棋`、`棋局`、`开局`
+
+### 使用示例
+
+```
+用户: 我想下棋
+Claude: [展示当前配置和对局列表]
+
+用户: 红方，难度5
+Claude: 执红方，难度5级，开始对局
+
+用户: 炮二平五
+Claude: 🎯 用户：炮二平五
+        🤖 AI：炮8平5
+
+用户: 马吴进琪
+Claude: 🎯 用户：马五进七  [自动纠错]
+        🤖 AI：xxx
+```
+
+### Skill 详细说明
+
+完整功能请查看 [.claude/skills/xiangqi-partner/SKILL.md](.claude/skills/xiangqi-partner/SKILL.md)。
+
 ## License
 
 MIT
