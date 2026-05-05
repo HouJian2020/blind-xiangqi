@@ -121,3 +121,6 @@ Thumbs.db
 CLAUDE.md
 design.md
 DESIGN.md
+
+# Feishu config (contains secrets)
+config/feishu.env

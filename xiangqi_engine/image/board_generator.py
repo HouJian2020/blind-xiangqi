@@ -1,4 +1,4 @@
-"""棋盘图片生成"""
+"""棋盘图片生成 - 使用 xiangqi-setup CLI 生成 SVG（原始稳定版本）"""
 
 import subprocess
 import tempfile
@@ -6,12 +6,21 @@ from pathlib import Path
 from typing import Optional
 
 
-def generate_board_image(
+def generate_board_image_svg(
     fen: str,
     output_path: Optional[str] = None,
     theme: str = "clean_alpha",
 ) -> str:
-    """从 FEN 生成棋盘图片"""
+    """从 FEN 生成棋盘 SVG 图片（xiangqi-setup 方案）
+
+    Args:
+        fen: 棋局 FEN 字符串
+        output_path: 输出路径，None 则使用临时文件
+        theme: 主题名称
+
+    Returns:
+        生成的 SVG 图片路径
+    """
     # 创建临时 FEN 文件
     with tempfile.NamedTemporaryFile(mode="w", suffix=".fen", delete=False) as f:
         f.write(fen)

@@ -12,6 +12,8 @@ dependencies = [
     "chess>=1.10",
     "xiangqi-setup>=1.0",
     "cchess>=0.1.0",
+    "lark-oapi>=1.5.0",
+    "flask>=2.0",
 ]
 
 [project.optional-dependencies]
