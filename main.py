@@ -14,10 +14,14 @@ sys.path.insert(0, str(Path(__file__).parent))
 from feishu_bot.bot import create_bot
 from feishu_bot.config import FeishuConfig
 
-# 配置日志
+# 配置日志 - 输出到文件和标准输出
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    handlers=[
+        logging.FileHandler('/tmp/feishu_bot.log'),
+        logging.StreamHandler(sys.stdout),
+    ]
 )
 
 # 全局机器人实例

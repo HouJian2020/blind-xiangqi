@@ -17,12 +17,12 @@ from .move import MoveRecord
 class GameMeta:
     """对局元数据"""
 
-    date: str                           # 对局日期
+    date: str                           # 对局开始时间
     player_color: str                   # 玩家执方 (red/black)
     level: int                          # 难度等级 (1-10)
+    updated_at: str = ""                # 最后更新时间
     result: str = "ongoing"             # 结果 (ongoing/win/loss/draw)
     total_moves: int = 0                # 总招法数
-
 
 @dataclass
 class Game:
@@ -52,8 +52,10 @@ class Game:
             新对局实例
         """
         now = datetime.now()
+        date_str = now.strftime("%Y-%m-%dT%H:%M:%S")
         meta = GameMeta(
-            date=now.strftime("%Y-%m-%dT%H:%M:%S"),
+            date=date_str,
+            updated_at=date_str,
             player_color=player_color,
             level=level,
         )
@@ -62,6 +64,10 @@ class Game:
         game._current_side = "red"  # 红方先行
 
         return game
+
+    def _update_timestamp(self) -> None:
+        """更新时间戳"""
+        self.meta.updated_at = datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
 
     def get_current_side(self) -> str:
         """获取当前行棋方"""
@@ -101,6 +107,7 @@ class Game:
 
         # 更新元数据
         self.meta.total_moves = len(self.moves)
+        self._update_timestamp()
 
         return True
 
@@ -121,6 +128,7 @@ class Game:
     def set_result(self, result: str) -> None:
         """设置对局结果"""
         self.meta.result = result
+        self._update_timestamp()
 
     def is_player_turn(self) -> bool:
         """检查是否玩家回合"""
@@ -158,6 +166,7 @@ class Game:
         # 更新元数据
         self.meta.total_moves = len(self.moves)
         self.meta.result = "ongoing"  # 重置结果为进行中
+        self._update_timestamp()
 
         return True
 

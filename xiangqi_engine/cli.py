@@ -10,7 +10,7 @@ from .game.validator import MoveValidator
 from .storage.config import ConfigManager
 from .storage.recorder import GameRecorder
 from .notation.converter import MoveConverter
-from .image.board_generator import generate_board_image
+from .image.board_generator import generate_board_image_svg
 from .engine.pikafish import PikafishEngine
 
 # 配置日志：DEBUG写入文件，INFO及以上显示在终端
@@ -191,7 +191,7 @@ def _game_loop(
 
             if cmd == "show":
                 try:
-                    path = generate_board_image(game.get_fen(), theme=config.image_theme)
+                    path = generate_board_image_svg(game.get_fen(), theme=config.image_theme)
                     print(f"棋盘图片: {path}")
                 except Exception as e:
                     print(f"生成失败: {e}")
@@ -543,7 +543,7 @@ def cmd_show(args: argparse.Namespace) -> None:
         fen = game.get_fen_at_move(idx)
 
     try:
-        path = generate_board_image(fen, args.output, config.image_theme)
+        path = generate_board_image_svg(fen, args.output, config.image_theme)
         print(f"棋盘图片: {path}")
     except Exception as e:
         print(f"生成失败: {e}")

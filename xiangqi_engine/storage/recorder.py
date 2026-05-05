@@ -85,6 +85,7 @@ class GameRecorder:
                     "file": filepath.name,
                     "path": str(filepath),
                     "date": game_date,
+                    "updated_at": data["meta"].get("updated_at", game_date),
                     "player_color": data["meta"]["player_color"],
                     "level": data["meta"]["level"],
                     "result": data["meta"]["result"],
