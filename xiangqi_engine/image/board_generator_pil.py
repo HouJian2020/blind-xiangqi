@@ -157,12 +157,18 @@ def generate_board_image_pil(
                     # 玩家执红：红方在下（玩家视角）
                     # FEN row_idx=0（黑方底线）显示在顶部
                     y_pos = MARGIN + row_idx * CELL_SIZE
+                    # 红方视角：col_idx=0 在左边（红方「九」位）
+                    # 红方列编号一二三四五六七八九从右到左，与 FEN 列顺序一致
+                    x_pos = MARGIN + col_idx * CELL_SIZE
                 else:
                     # 玩家执黑：黑方在下（玩家视角）
                     # FEN row_idx=0（黑方底线）显示在底部
                     y_pos = MARGIN + (9 - row_idx) * CELL_SIZE
-
-                x_pos = MARGIN + col_idx * CELL_SIZE
+                    # 黑方视角：col_idx=0 应在右边（黑方「九」位）
+                    # 黑方列编号一二三四五六七八九也是从右到左（黑方自己视角），
+                    # 但 FEN 的 col_idx=0 是红方视角的左边 = 黑方视角的右边，
+                    # 所以需要水平翻转 x 轴
+                    x_pos = MARGIN + (8 - col_idx) * CELL_SIZE
 
                 # 棋子字符和颜色
                 piece_char = PIECE_CHARS[char]

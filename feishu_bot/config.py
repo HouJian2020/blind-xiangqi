@@ -1,18 +1,18 @@
-"""配置管理"""
+"""配置管理 — webhook service 模式
+
+飞书连接由 FeishuGateway 统一管理，这里只保留游戏配置。
+"""
 
 import os
 from pathlib import Path
-from typing import Optional
 
 
 class FeishuConfig:
-    """飞书配置"""
+    """游戏配置（飞书凭证已移到 gateway）"""
 
-    # 从环境变量读取
-    APP_ID: str = os.getenv("FEISHU_APP_ID", "")
-    APP_SECRET: str = os.getenv("FEISHU_APP_SECRET", "")
-    ENCRYPT_KEY: str = os.getenv("FEISHU_ENCRYPT_KEY", "")
-    VERIFICATION_TOKEN: str = os.getenv("FEISHU_VERIFICATION_TOKEN", "")
+    # Gateway 连接
+    GATEWAY_URL: str = os.getenv("GATEWAY_URL", "http://localhost:9000")
+    SERVICE_NAME: str = os.getenv("SERVICE_NAME", "blind_chess")
 
     # 游戏配置
     DEFAULT_LEVEL: int = int(os.getenv("DEFAULT_LEVEL", "5"))
@@ -25,7 +25,7 @@ class FeishuConfig:
 
     @classmethod
     def load_from_env_file(cls, filepath: str = "config/feishu.env") -> None:
-        """从 .env 文件加载配置"""
+        """从 .env 文件加载配置（保持兼容，可选）"""
         env_path = Path(filepath)
         if env_path.exists():
             with open(env_path, "r") as f:
@@ -37,13 +37,11 @@ class FeishuConfig:
                         value = value.strip()
                         os.environ[key] = value
 
-            # 重新加载
-            cls.APP_ID = os.getenv("FEISHU_APP_ID", "")
-            cls.APP_SECRET = os.getenv("FEISHU_APP_SECRET", "")
-            cls.ENCRYPT_KEY = os.getenv("FEISHU_ENCRYPT_KEY", "")
-            cls.VERIFICATION_TOKEN = os.getenv("FEISHU_VERIFICATION_TOKEN", "")
+            cls.GATEWAY_URL = os.getenv("GATEWAY_URL", "http://localhost:9000")
+            cls.SERVICE_NAME = os.getenv("SERVICE_NAME", "blind_chess")
             cls.DEFAULT_LEVEL = int(os.getenv("DEFAULT_LEVEL", "5"))
             cls.DEFAULT_COLOR = os.getenv("DEFAULT_COLOR", "red")
+            cls.BOARD_IMAGE_METHOD = os.getenv("BOARD_IMAGE_METHOD", "pil")
 
     @classmethod
     def ensure_dirs(cls) -> None:
@@ -54,4 +52,4 @@ class FeishuConfig:
     @classmethod
     def validate(cls) -> bool:
         """验证配置是否完整"""
-        return bool(cls.APP_ID and cls.APP_SECRET)
+        return bool(cls.GATEWAY_URL)
