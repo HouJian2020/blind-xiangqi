@@ -6,6 +6,7 @@ Pikafish 是 Stockfish 的中国象棋衍生版本，支持 UCI 协议。
 
 import logging
 import re
+from threading import Timer
 from typing import Optional
 from pathlib import Path
 
@@ -55,6 +56,10 @@ def map_level_to_time(user_level: int) -> float:
 class PikafishEngine:
     """Pikafish 引擎封装"""
 
+    # 空闲超时自动休眠（停进程省内存，下次用自动唤醒）
+    # 设为 10 秒方便测试，正式环境改 30*60（30 分钟）
+    IDLE_TIMEOUT = 5*60
+
     def __init__(self, engine_path: Optional[str] = None):
         """
         初始化 Pikafish 引擎
@@ -74,6 +79,9 @@ class PikafishEngine:
         self._current_fen = INITIAL_FEN
         self._depth_limit: Optional[int] = None
         self._time_limit: Optional[float] = None
+        # 空闲休眠状态
+        self._idle_timer: Optional[Timer] = None
+        self._suspended = False  # True=进程已停但状态保留，下次活跃自动唤醒
 
     def start(self) -> None:
         """启动引擎"""
@@ -82,10 +90,51 @@ class PikafishEngine:
         # 设置 Hash 大小（可选优化）
         self.client.set_option("Hash", 64)
         self.client.is_ready()
+        self._suspended = False
+        self._start_idle_timer()
 
     def stop(self) -> None:
-        """停止引擎"""
+        """停止引擎（彻底停止，结束对局时调用）"""
+        self._cancel_idle_timer()
         self.client.stop()
+        self._suspended = False
+
+    # ===== 空闲休眠 / 唤醒（内部机制，对调用方透明）=====
+
+    def _start_idle_timer(self) -> None:
+        """启动/重置空闲计时器。每次引擎活跃后调用。"""
+        self._cancel_idle_timer()
+        self._idle_timer = Timer(self.IDLE_TIMEOUT, self._suspend)
+        self._idle_timer.daemon = True  # 进程退出时自动结束，不阻塞退出
+        self._idle_timer.start()
+
+    def _cancel_idle_timer(self) -> None:
+        if self._idle_timer is not None:
+            self._idle_timer.cancel()
+            self._idle_timer = None
+
+    def _suspend(self) -> None:
+        """空闲超时：停进程省内存，但保留 _current_fen 等状态以便唤醒"""
+        if self._suspended:
+            return
+        if self.client.is_running():
+            self.client.stop()
+            self._suspended = True
+            logger.info(
+                f"引擎空闲 {self.IDLE_TIMEOUT} 秒，自动休眠（进程已停，状态保留）"
+            )
+
+    def _wake_if_suspended(self) -> None:
+        """如果被休眠了，重启进程并恢复局面。活跃方法调用前先调这个。"""
+        if not self._suspended:
+            return
+        logger.info("引擎从休眠中唤醒，重启进程...")
+        self.client.start()
+        self.client.set_option("Hash", 64)
+        self.client.is_ready()
+        # 恢复休眠前的局面
+        self.client.send_command(f"position fen {self._current_fen}")
+        self._suspended = False
 
     def set_user_level(self, user_level: int) -> None:
         """
@@ -108,9 +157,11 @@ class PikafishEngine:
 
     def set_position(self, fen: str = INITIAL_FEN) -> None:
         """设置当前局面"""
+        self._wake_if_suspended()
         logger.debug(f"set_position: {fen}")
         self._current_fen = fen
         self.client.send_command(f"position fen {fen}")
+        self._start_idle_timer()
 
     def make_move(self, move_uci: str) -> None:
         """
@@ -119,7 +170,9 @@ class PikafishEngine:
         Args:
             move_uci: UCI 格式招法，如 "b2e5"
         """
+        self._wake_if_suspended()
         self.client.send_command(f"position fen {self._current_fen} moves {move_uci}")
+        self._start_idle_timer()
 
     def get_best_move(self, time_limit: Optional[float] = None) -> Optional[str]:
         """
@@ -131,6 +184,7 @@ class PikafishEngine:
         Returns:
             UCI 格式招法，如 "b2e5"
         """
+        self._wake_if_suspended()
         logger.debug(f"get_best_move 开始, depth_limit={self._depth_limit}, time_limit={self._time_limit}")
 
         # 根据设置选择搜索方式
@@ -169,14 +223,17 @@ class PikafishEngine:
         except TimeoutError as e:
             logger.error(f"等待 bestmove 超时: {e}")
             return None
+        finally:
+            # 无论成功失败，都重置空闲计时（AI 思考也是引擎活跃）
+            self._start_idle_timer()
 
     def get_current_fen(self) -> str:
         """获取当前局面 FEN"""
         return self._current_fen
 
     def is_running(self) -> bool:
-        """检查引擎是否运行"""
-        return self.client.is_running()
+        """检查引擎是否运行（包括休眠状态——休眠时进程停了但可立即唤醒，算"可用"）"""
+        return self._suspended or self.client.is_running()
 
     def __enter__(self):
         """上下文管理器入口"""
